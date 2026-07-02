@@ -51,7 +51,7 @@ clean step. The profile comes from an actual Llama2-70B LoRA fine-tuning job on 
 
 - `aggregate_training.py` — processing script (see below).
 - `pscad_load_profile.csv` — full load trace, `time, dP_pu` (~10,360 samples,
-  0.2 s steps).
+  0.2 s steps). ##THIS FILE WILL NOT WORK IN PSCAD CURRENTLY, PSCAD operates on space seperated values and does not accept header row. see pscad_load_short.csv for an example of acceptable data in PSCAD##
 - `pscad_load_short.csv` — 300 s trimmed window used in PSCAD, space-delimited
   with the PSCAD comment header (`! Time [s]  dP_pu ...`).
 - `load_profile.png` / `load_profile_short.png` — plots of the load traces.
