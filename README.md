@@ -89,4 +89,5 @@ The script turns raw GPU telemetry into a PSCAD-ready load signal:
 | Dynamic training load | Llama2 16-node power trace, 250 MW scale | Sustained ≈ ±0.05 Hz oscillation tracking the workload |
 
 *Dated 7-2-26. All per-unit values are on a 5 GW system base with H = 5 s.*
+
 *Disclaimer: This README file was generated with help from Claude*
