@@ -62,6 +62,15 @@ clean step. The profile comes from an actual Llama2-70B LoRA fine-tuning job on 
   continuous small oscillations (≈ ±0.05 Hz) tracking the training workload.
 - `RoCoF of dynamic load 7-2-26.png` — corresponding RoCoF.
 
+## Data source
+
+The GPU power telemetry used in this study comes from the dataset published by
+Vercellino et al. See citation below:
+
+> Vercellino et al., "Measurement of Generative AI Workload Power Profiles for
+> Whole-Facility Data Center Infrastructure Planning," arXiv:2604.07345 (2026).
+> https://doi.org/10.48550/arXiv.2604.07345
+
 ## Data pipeline (`aggregate_training.py`)
 
 The script turns raw GPU telemetry into a PSCAD-ready load signal:
