@@ -10,6 +10,91 @@ representation — a swing equation with load damping, a turbine-governor, and a
 automatic generation control (AGC) loop — so the two cases can be compared
 directly.
 
+*This study is done under the supervision of Dr. Timothy Hansen and Dr. Zongjie Wang, apart of the [Grid Modernization Initiative](https://energy.colostate.edu/grid-modernization-initiative/) at Colorado State University*
+
+## New to Power Systems Concepts? No Problem!
+
+**If you are already familiar with power systems, feel free to skip straight to the [System Model](#system-model) section.**
+
+If you are new to power systems engineering, looking at control block diagrams can feel overwhelming. Personally, if I saw this page a few months ago most of it would have gone way over my head. Much of it is still new to me, so I wanted to make a section for those new to the world of power systems (like myself)  This section breaks down the core physics and jargon used in this simulation model into plain English.
+
+---
+
+### The Grid Analogy: The Spinning Flywheel
+Think of the entire power grid as a massive, heavy, spinning flywheel. 
+* **The Power Plants** (hydro, steam, gas turbines) are teams of people constantly pushing the flywheel to keep it spinning at exactly **60 Rotations Per Second (60 Hz)**.
+* **The Loads** (houses, factories, and our **AI Data Center**) act like friction or brakes pushing against the flywheel.
+
+When a massive data center suddenly starts a heavy AI training model, it's like slamming a brake onto that spinning flywheel. The flywheel will instantly begin to slow down. How fast it slows down, and how the grid recovers, is governed by a fundamental formula called the **Swing Equation**.
+
+---
+
+### Understanding the Swing Equation
+
+In its simplest form, the **Swing Equation** is just Newton's Second Law ($F = ma$) rewritten for a rotating electrical grid:
+
+$$M \left(\frac{d\omega}{dt}\right) = \Delta P - D\omega$$
+
+Where:
+* $\frac{d\omega}{dt}$ (**RoCoF**): How fast the grid's speed/frequency is changing right now.
+* $M$ (**Inertia**): How heavy and hard-to-move the spinning grid is.
+* $\Delta P$ (**Power Imbalance**): The difference between power being generated and power being consumed ($P_{mechanical} - P_{electrical}$).
+* $D\omega$ (**Damping**): The grid's natural ability to resist speed changes.
+
+#### Moving from Math to Simulation Blocks
+To build this in a simulation tool like PSCAD or Hypersim, we need an **Integrator block** (which turns an acceleration/rate of change into a final speed/frequency). To do that, we rearrange the equation to isolate the rate of change ($\frac{d\omega}{dt}$):
+
+$$\left(\frac{d\omega}{dt}\right) = \frac{1}{M}(\Delta P - D\omega)$$
+
+In the simulation's **Swing Equation block**, this math is converted directly into a loop:
+1. We take our power imbalance ($\Delta P$) and subtract the damping effect ($D\omega$).
+2. We pass it through a Gain block of $\frac{1}{M}$ to calculate the acceleration.
+3. We pass that acceleration through an Integrator block ($\frac{1}{s}$) to output the real-time **Frequency Deviation ($\omega$)**.
+
+---
+### Restoring grid balance: Governors and AGC
+
+The swing equation models the problem, we need two components to help respond to that problem. 
+
+1. The Governor: The Local Reflex (Primary Control)
+The governor is a local, mechanical or digital throttle attached directly to each individual power plant turbine. Its job is to react **instantly** (within milliseconds to seconds) to any sudden change in grid speed.
+
+* **How it works:** Imagine you are driving a car on cruise control and you suddenly hit a steep hill. The car naturally begins to slow down. The cruise control instantly senses this speed drop and injects more fuel into the engine to stabilize your speed. That is exactly what a governor does. When the data center turns on and grid frequency drops, the governor senses the slowdown and opens up the steam or gas valves to inject more power.
+* **The Limitation (Steady-State Error):** Governors are designed with "Droop" (the `R` value in our model). Because of this, a governor **stops the bleeding, but it doesn't heal the wound.** It will stabilize the frequency so it stops dropping, but it will leave the frequency floating at a slightly lower level (e.g., 59.86 Hz instead of 60.00 Hz). To get back to exactly 60.00 Hz, we need the next layer of defense.
+
+2. Automatic Generation Control (AGC): The Central Brain (Secondary Control)
+AGC is a centralized, computerized brain operated by the grid's main control center. While governors act locally and instantly, AGC acts globally and more slowly (operating over a horizon of 10 to 30 seconds).
+
+* **How it works:** Going back to the car analogy: your cruise control stabilized the car on the hill, but maybe it settled at 58 mph instead of your target 60 mph. AGC is like you manually tapping the "Resume/Accelerate" button a few times to force the cruise control setpoint back up until the speedometer reads exactly 60 mph.
+* **In the Grid:** The AGC system constantly monitors the entire grid's frequency error. If it sees that the governors have stabilized the grid at 59.86 Hz, the AGC system sends a digital signal to multiple power plants across the network, telling them: *"Hey, adjust your baseline power up by 2%."* This wipes out the steady-state error and pulls the frequency line all the way back up to a perfect 60.00 Hz.
+
+---
+### The Power Grid Glossary
+
+When analyzing the graphs and parameters in this repository, you will encounter several industry-specific terms. Here is what they actually mean:
+
+#### 1. Per-Unit System (`pu`)
+* **What it is:** A method of normalizing values so different sizes of equipment can be easily compared. 
+* **Why we use it:** Instead of calculating raw numbers like "250,000,000 Watts" inside a "5,000,000,000 Watt" grid, we establish a **Base Power (5 GW)**. 
+* **Example:** The 5 GW grid base is equal to `1.0 pu`. Therefore, a 250 MW data center load is simply represented as `0.05 pu` ($250\text{ MW} / 5000\text{ MW}$). It keeps the math clean and universal.
+
+#### 2. Inertia Constant (`H` and `M`)
+* **What it is:** $H$ is the Inertia Constant (measured in seconds). It represents how many seconds a generator can supply its rated power using *purely* the kinetic energy stored in its heavy spinning rotor. 
+* **What $M$ is:** $M$ is the angular momentum, mathematically defined as $M = 2H$. 
+* **Significance:** If a grid has high inertia ($H = 5$), the frequency drops very slowly when a load hits, giving the grid operators time to react. If a grid has low inertia (like a grid with mostly solar and wind, which have no heavy spinning parts), the frequency will crash incredibly fast.
+
+#### 3. RoCoF (Rate of Change of Frequency)
+* **What it is:** The derivative of frequency over time ($\frac{df}{dt}$), measured in Hz per second.
+* **Significance:** This is the slope of the frequency line. If RoCoF is too high, protective relays on the grid will panic and trip offline to protect equipment, potentially causing widespread blackouts.
+
+#### 4. Governor Droop Gain (`R`)
+* **What it is:** The "throttle sensitivity" of a generator. Droop is a percentage that determines how much a generator will open its fuel/steam valves in response to a drop in frequency.
+* **Why it's configured as $-1/R$:** In a control loop, a standard $5\%$ droop means $R = 0.05$. In the diagram, this is inverted as a gain block of $\frac{-1}{0.05} = -20$. This ensures that as frequency drops ($-\omega$), the governor injects a massive positive boost ($+$) of power to stabilize the system.
+
+#### 5. Governor Time Constant (`Tg`)
+* **What it is:** The physical reaction delay of the generator's governor mechanism (measured in seconds). 
+* **Significance:** It dictates how long it takes for physical valves to open and mechanisms to respond after detecting a frequency drop. A small $T_g$ (e.g., 0.05s) mimics highly responsive assets like batteries, while a larger $T_g$ (e.g., 1.0s to 5.0s) mimics massive thermal power plants.
+
 ## System model
 
 The core is a single-machine equivalent of the bulk power system, built from
@@ -97,6 +182,12 @@ The script turns raw GPU telemetry into a PSCAD-ready load signal:
 | Load trip | 0.05 pu load removed as a step | Peaks ≈ 60.14 Hz, AGC restores to 60 Hz over ~300 s |
 | Dynamic training load | Llama2 16-node power trace, 250 MW scale | Sustained ≈ ±0.05 Hz oscillation tracking the workload |
 
+## Next Steps 
+
+Currently, this study focuses on frequency analysis. Next, I am expanding this model to look at voltage stability. If you have any reccomendations feel free to reach out to me personally. 
+
+---
+
 *Dated 7-2-26. All per-unit values are on a 5 GW system base with H = 5 s.*
 
-*Disclaimer: This README file was generated with help from Claude*
+*Disclaimer: Parts of this README file was generated with help from Claude, it is quite good at coming up with analogies for these topics, and working with LaTeX can be quite time consuming.*
