@@ -79,19 +79,7 @@ The script turns raw GPU telemetry into a PSCAD-ready load signal:
 > Note: the script expects raw NVML files under
 > `00_raw_datasets/training_llama2_70b_lora/16node/`. Those raw logs are **not**
 > included here — only the processed CSV outputs are.
-
-## Reproducing
-
-- Open either `.png` schematic as a reference and rebuild in PSCAD, or load your
-  `.pscx` project (add it to the repo if you want others to run it directly).
-- Point the file-read component in the dynamic-load model at
-  `pscad_load_short.csv`.
-- To regenerate the CSVs from raw telemetry:
-  ```bash
-  cd "Training Load Simulation"
-  pip install pandas numpy
-  python aggregate_training.py
-  ```
+> Please go to https://data.nlr.gov/submissions/312 for full dataset.
 
 ## Key results
 
@@ -101,3 +89,4 @@ The script turns raw GPU telemetry into a PSCAD-ready load signal:
 | Dynamic training load | Llama2 16-node power trace, 250 MW scale | Sustained ≈ ±0.05 Hz oscillation tracking the workload |
 
 *Dated 7-2-26. All per-unit values are on a 5 GW system base with H = 5 s.*
+*Disclaimer: This README file was generated with help from Claude*
