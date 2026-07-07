@@ -1,3 +1,6 @@
+#NOTE: Discoveres a crucial error in my dynamic simulation 7/7/26 - Load needs to be flipped for my simulation to recognized when load is being taken/added. Stay tuned for updates!
+---
+
 # Datacenter Load Impact on Grid Frequency — PSCAD Study
 
 PSCAD models and results studying how a large AI datacenter load affects grid
